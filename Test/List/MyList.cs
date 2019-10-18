@@ -49,6 +49,7 @@ namespace List
         public void Clear()
         {
             items = new T[0];
+            Count = 0;
         }
 
         public bool Contains(T item)
