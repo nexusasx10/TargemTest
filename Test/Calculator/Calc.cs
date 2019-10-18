@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Calculator
 {
@@ -11,6 +12,7 @@ namespace Calculator
                 new RegexToken("Space", @"\s+", 0),
                 new RegexToken("PlusOperator", @"\+", 0),
                 new RegexToken("MinusOperator", @"-", 0),
+                new UnaryOperatorToken("UnaryMinusOperator", "-", 1),
                 new RegexToken("MultiplyOperator", @"\*", 0),
                 new RegexToken("DivisionOperator", @"/", 0),
                 new RegexToken("Number", @"\d*\.?\d+", 0),
@@ -18,7 +20,8 @@ namespace Calculator
                 new RegexToken("CloseBracket", @"\)", 0),
             };
 
-            var parser = new Parser(tokens);
+            var parser = new Parser(tokens, new List<string> { "Space" });
+
             if (args.Length > 1)
             {
                 var lexems = parser.Parse(args[1]);

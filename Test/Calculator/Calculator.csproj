@@ -50,9 +50,9 @@
     <Compile Include="Parser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RegexToken.cs" />
-    <Compile Include="DelegateToken.cs" />
     <Compile Include="RPN.cs" />
     <Compile Include="RPNError.cs" />
+    <Compile Include="UnaryOperatorToken.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

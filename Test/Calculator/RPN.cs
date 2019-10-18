@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 
 namespace Calculator
@@ -7,10 +8,11 @@ namespace Calculator
     {
         private Dictionary<string, int> priority = new Dictionary<string, int>
         {
-            {"PlusOperator", 1 },
-            {"MinusOperator", 1 },
-            {"MultiplyOperator", 2 },
-            {"DivisionOperator", 2 },
+            { "PlusOperator", 1 },
+            { "MinusOperator", 1 },
+            { "MultiplyOperator", 2 },
+            { "DivisionOperator", 2 },
+            { "UnaryMinusOperator", 3 }
         };
 
         public Lexeme Calculate(IEnumerable<Lexeme> lexemes)
@@ -30,28 +32,34 @@ namespace Calculator
                             throw new RPNError("Missing operand");
                         var second = float.Parse(stack.Pop().Text, formatInfo);
                         var first = float.Parse(stack.Pop().Text, formatInfo);
-                        stack.Push(new Lexeme($"{first + second}", null, 0));
+                        stack.Push(new Lexeme((first + second).ToString(formatInfo), null, 0));
                         break;
                     case "MinusOperator":
                         if (stack.Count < 2)
                             throw new RPNError("Missing operand");
                         second = float.Parse(stack.Pop().Text, formatInfo);
                         first = float.Parse(stack.Pop().Text, formatInfo);
-                        stack.Push(new Lexeme($"{first - second}", null, 0));
+                        stack.Push(new Lexeme((first - second).ToString(formatInfo), null, 0));
                         break;
                     case "MultiplyOperator":
                         if (stack.Count < 2)
                             throw new RPNError("Missing operand");
                         second = float.Parse(stack.Pop().Text, formatInfo);
                         first = float.Parse(stack.Pop().Text, formatInfo);
-                        stack.Push(new Lexeme($"{first * second}", null, 0));
+                        stack.Push(new Lexeme((first * second).ToString(formatInfo), null, 0));
                         break;
                     case "DivisionOperator":
                         if (stack.Count < 2)
                             throw new RPNError("Missing operand");
                         second = float.Parse(stack.Pop().Text, formatInfo);
                         first = float.Parse(stack.Pop().Text, formatInfo);
-                        stack.Push(new Lexeme($"{first / second}", null, 0));
+                        stack.Push(new Lexeme((first / second).ToString(formatInfo), null, 0));
+                        break;
+                    case "UnaryMinusOperator":
+                        if (stack.Count < 1)
+                            throw new RPNError("Missing operand");
+                        first = float.Parse(stack.Pop().Text, formatInfo);
+                        stack.Push(new Lexeme((-first).ToString(formatInfo), null, 0));
                         break;
                 }
             }
@@ -70,8 +78,6 @@ namespace Calculator
             {
                 switch (lexeme.Token.Type)
                 {
-                    case "Space":
-                        break;
                     case "Number":
                         yield return lexeme;
                         break;
@@ -82,7 +88,7 @@ namespace Calculator
                         if (stack.Count > 0)
                         {
                             var stackTop = stack.Peek();
-                            while (priority.ContainsKey(stackTop.Token.Type) && priority[lexeme.Token.Type] < priority[stackTop.Token.Type])
+                            while (priority.ContainsKey(stackTop.Token.Type) && priority[lexeme.Token.Type] <= priority[stackTop.Token.Type])
                             {
                                 yield return stack.Pop();
                                 if (stack.Count > 0)
@@ -91,6 +97,9 @@ namespace Calculator
                                     break;
                             }
                         }
+                        stack.Push(lexeme);
+                        break;
+                    case "UnaryMinusOperator":
                         stack.Push(lexeme);
                         break;
                     case "OpenBracket":

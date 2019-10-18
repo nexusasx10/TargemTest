@@ -1,18 +1,23 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Calculator
 {
     public class Parser
     {
         private IEnumerable<IToken> tokens;
+        private List<string> insignificantTokenTypes;
 
-        public Parser(IEnumerable<IToken> tokens)
+        public Parser(IEnumerable<IToken> tokens, List<string> insignificantTokenTypes)
         {
             this.tokens = tokens;
+            this.insignificantTokenTypes = insignificantTokenTypes;
         }
 
         public IEnumerable<Lexeme> Parse(string input)
         {
+            var lexems = new List<Lexeme>();
+
             for (var start = 0; start < input.Length; start++)
             {
                 IToken matchedToken = null;
@@ -22,7 +27,7 @@ namespace Calculator
                 {
                     foreach (var token in tokens)
                     {
-                        if (token.IsMatch(input.Substring(start, length)) && (matchedToken == null || matchedToken.Priority < token.Priority))
+                        if (token.IsMatch(input.Substring(start, length), lexems) && (matchedToken == null || matchedToken.Priority < token.Priority))
                         {
                             matchedToken = token;
                             matchedStart = start;
@@ -32,7 +37,12 @@ namespace Calculator
 
                     if (matchedToken != null)
                     {
-                        yield return new Lexeme(input.Substring(matchedStart, matchedLength), matchedToken, matchedStart);
+                        var lexeme = new Lexeme(input.Substring(matchedStart, matchedLength), matchedToken, matchedStart);
+                        if (!insignificantTokenTypes.Contains(matchedToken.Type))
+                        {
+                            lexems.Add(lexeme);
+                            yield return lexeme;
+                        }
                         start = matchedStart + matchedLength - 1;
                         break;
                     }

@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace Calculator
 {
@@ -15,7 +16,7 @@ namespace Calculator
             Priority = priority;
         }
 
-        public bool IsMatch(string input)
+        public bool IsMatch(string input, List<Lexeme> previousLexems)
         {
             var matches = Regex.Matches(input, Pattern);
             foreach (var match in matches)
