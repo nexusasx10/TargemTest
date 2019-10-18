@@ -13,7 +13,7 @@ namespace Calculator
 
         public IEnumerable<Lexeme> Parse(string input)
         {
-            for (var start = 0; start < input.Length - 1; start++)
+            for (var start = 0; start < input.Length; start++)
             {
                 IToken matchedToken = null;
                 var matchedStart = 0;
@@ -32,14 +32,14 @@ namespace Calculator
 
                     if (matchedToken != null)
                     {
-                        yield return new Lexeme(input.Substring(matchedStart, matchedLength), matchedToken);
-                        start = matchedStart + matchedLength;
-                        continue;
+                        yield return new Lexeme(input.Substring(matchedStart, matchedLength), matchedToken, matchedStart);
+                        start = matchedStart + matchedLength - 1;
+                        break;
                     }
                 }
 
                 if (matchedToken == null)
-                    throw new ParseError();
+                    throw new ParseError(input.Substring(start));
             }
         }
     }

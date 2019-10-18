@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Globalization;
 
 namespace Calculator
 {
@@ -6,8 +7,6 @@ namespace Calculator
     {
         private Dictionary<string, int> priority = new Dictionary<string, int>
         {
-            {"OpenBracket", 0 },
-            {"CloseBracket", 0 },
             {"PlusOperator", 1 },
             {"MinusOperator", 1 },
             {"MultiplyOperator", 2 },
@@ -16,6 +15,8 @@ namespace Calculator
 
         public Lexeme Calculate(IEnumerable<Lexeme> lexemes)
         {
+            var formatInfo = new NumberFormatInfo { NumberDecimalSeparator = "." };
+
             var stack = new Stack<Lexeme>();
             foreach (var lexeme in FromInfix(lexemes))
             {
@@ -25,19 +26,40 @@ namespace Calculator
                         stack.Push(lexeme);
                         break;
                     case "PlusOperator":
-                        stack.Push(new Lexeme($"{float.Parse(stack.Pop().Text) + float.Parse(stack.Pop().Text)}", null));
+                        if (stack.Count < 2)
+                            throw new RPNError("Missing operand");
+                        var second = float.Parse(stack.Pop().Text, formatInfo);
+                        var first = float.Parse(stack.Pop().Text, formatInfo);
+                        stack.Push(new Lexeme($"{first + second}", null, 0));
                         break;
                     case "MinusOperator":
-                        stack.Push(new Lexeme($"{float.Parse(stack.Pop().Text) - float.Parse(stack.Pop().Text)}", null));
+                        if (stack.Count < 2)
+                            throw new RPNError("Missing operand");
+                        second = float.Parse(stack.Pop().Text, formatInfo);
+                        first = float.Parse(stack.Pop().Text, formatInfo);
+                        stack.Push(new Lexeme($"{first - second}", null, 0));
                         break;
                     case "MultiplyOperator":
-                        stack.Push(new Lexeme($"{float.Parse(stack.Pop().Text) * float.Parse(stack.Pop().Text)}", null));
+                        if (stack.Count < 2)
+                            throw new RPNError("Missing operand");
+                        second = float.Parse(stack.Pop().Text, formatInfo);
+                        first = float.Parse(stack.Pop().Text, formatInfo);
+                        stack.Push(new Lexeme($"{first * second}", null, 0));
                         break;
                     case "DivisionOperator":
-                        stack.Push(new Lexeme($"{float.Parse(stack.Pop().Text) / float.Parse(stack.Pop().Text)}", null));
+                        if (stack.Count < 2)
+                            throw new RPNError("Missing operand");
+                        second = float.Parse(stack.Pop().Text, formatInfo);
+                        first = float.Parse(stack.Pop().Text, formatInfo);
+                        stack.Push(new Lexeme($"{first / second}", null, 0));
                         break;
                 }
             }
+
+            if (stack.Count == 0)
+                throw new RPNError("Missing operand");
+            if (stack.Count > 1)
+                throw new RPNError("Missing operator");
             return stack.Pop();
         }
 
@@ -57,23 +79,46 @@ namespace Calculator
                     case "MinusOperator":
                     case "MultiplyOperator":
                     case "DivisionOperator":
-                        var stackTop = stack.Peek();
-                        if (priority.ContainsKey(stackTop.Token.Type) && priority[lexeme.Token.Type] < priority[stackTop.Token.Type])
-                            yield return stack.Pop();
+                        if (stack.Count > 0)
+                        {
+                            var stackTop = stack.Peek();
+                            while (priority.ContainsKey(stackTop.Token.Type) && priority[lexeme.Token.Type] < priority[stackTop.Token.Type])
+                            {
+                                yield return stack.Pop();
+                                if (stack.Count > 0)
+                                    stackTop = stack.Peek();
+                                else
+                                    break;
+                            }
+                        }
                         stack.Push(lexeme);
                         break;
                     case "OpenBracket":
                         stack.Push(lexeme);
                         break;
                     case "CloseBracket":
-                        while (stack.Peek().Token.Type != "OpenBracket")
-                            yield return stack.Pop();
-                        stack.Pop();
+                        if (stack.Count > 0)
+                        {
+                            while (stack.Peek().Token.Type != "OpenBracket")
+                            {
+                                yield return stack.Pop();
+                                if (stack.Count == 0)
+                                    throw new RPNError("Unexpected close bracket");
+                            }
+                            stack.Pop();
+                        }
+                        else
+                            throw new RPNError("Unexpected close bracket");
                         break;
                 }
             }
             while (stack.Count > 0)
-                yield return stack.Pop();
+            {
+                var lexem = stack.Pop();
+                if (!priority.ContainsKey(lexem.Token.Type))
+                    throw new RPNError("Missing close bracket");
+                yield return lexem;
+            }
         }
     }
 }

@@ -13,7 +13,7 @@ namespace Calculator
                 new RegexToken("MinusOperator", @"-", 0),
                 new RegexToken("MultiplyOperator", @"\*", 0),
                 new RegexToken("DivisionOperator", @"/", 0),
-                new DelegateToken("Number", 0, input => float.TryParse(input, out _)),
+                new RegexToken("Number", @"\d*\.?\d+", 0),
                 new RegexToken("OpenBracket", @"\(", 0),
                 new RegexToken("CloseBracket", @"\)", 0),
             };
@@ -29,10 +29,19 @@ namespace Calculator
                 var input = Console.ReadLine();
                 while (input != string.Empty)
                 {
-                    var lexems = parser.Parse(input);
-                    foreach (var lexem in lexems)
-                        Console.WriteLine($"{lexem.Token.Type} {lexem.Text}");
-                    Console.WriteLine(new RPN().Calculate(lexems).Text);
+                    try
+                    {
+                        var lexems = parser.Parse(input);
+                        Console.WriteLine(new RPN().Calculate(lexems).Text);
+                    }
+                    catch (ParseError exc)
+                    {
+                        Console.WriteLine($"Unexpected symbol '{exc.Symbol}'");
+                    }
+                    catch (RPNError exc)
+                    {
+                        Console.WriteLine(exc.Message);
+                    }
                     input = Console.ReadLine();
                 }
             }
