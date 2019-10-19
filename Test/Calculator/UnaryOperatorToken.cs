@@ -2,22 +2,32 @@
 
 namespace Calculator
 {
-    public class UnaryOperatorToken : IToken
+    public class UnaryOperatorRecognizer : IRecognizer
     {
-        public string Type { get; }
-        public int Priority { get; }
         public string Operator { get; }
 
-        public UnaryOperatorToken(string type, string op, int priority)
+        public UnaryOperatorRecognizer(string @operator)
         {
-            Type = type;
-            Priority = priority;
-            Operator = op;
+            Operator = @operator;
         }
 
-        public bool IsMatch(string input, List<Lexeme> previousLexems)
+        public int GetLexemeLength(string input, List<Lexeme> previousLexems)
         {
-            return input == Operator && (previousLexems.Count == 0 || previousLexems[previousLexems.Count - 1].Token.Type.EndsWith("Operator") || previousLexems[previousLexems.Count - 1].Token.Type == "OpenBracket");
+            if (!input.StartsWith(Operator))
+                return 0;
+
+            if (previousLexems.Count == 0)
+                return Operator.Length;
+
+            var prevLexeme = previousLexems[previousLexems.Count - 1];
+            var missingFirstOperand = prevLexeme.TokenType == TokenType.PlusOperator
+                || prevLexeme.TokenType == TokenType.MinusOperator
+                || prevLexeme.TokenType == TokenType.UnaryMinusOperator
+                || prevLexeme.TokenType == TokenType.MultiplyOperator
+                || prevLexeme.TokenType == TokenType.DivideOperator
+                || prevLexeme.TokenType == TokenType.OpenBracket;
+
+            return missingFirstOperand ? Operator.Length : 0;
         }
     }
 }

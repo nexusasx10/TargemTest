@@ -1,55 +1,58 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Calculator
 {
     public class Parser
     {
-        private IEnumerable<IToken> tokens;
-        private List<string> insignificantTokenTypes;
+        private readonly List<(IRecognizer recognizer, TokenType tokenType, int priority)> recognizers;
+        private readonly List<TokenType> insignificantTokenTypes;
 
-        public Parser(IEnumerable<IToken> tokens, List<string> insignificantTokenTypes)
+        public Parser(List<TokenType> insignificantTokenTypes)
         {
-            this.tokens = tokens;
             this.insignificantTokenTypes = insignificantTokenTypes;
+            recognizers = new List<(IRecognizer recognizer, TokenType tokenType, int priority)>();
+        }
+
+        public void RegisterRecognizer(IRecognizer recognizer, TokenType tokenType, int priority)
+        {
+            recognizers.Add((recognizer, tokenType, priority));
         }
 
         public IEnumerable<Lexeme> Parse(string input)
         {
             var lexems = new List<Lexeme>();
 
-            for (var start = 0; start < input.Length; start++)
+            while (input.Length > 0)
             {
-                IToken matchedToken = null;
-                var matchedStart = 0;
-                var matchedLength = 0;
-                for (var length = input.Length - start; length > 0; length--)
+                var maxLexemeLength = 0;
+                int bestRecognizerIndex = -1;
+                for (var i = 0; i < recognizers.Count; i++)
                 {
-                    foreach (var token in tokens)
-                    {
-                        if (token.IsMatch(input.Substring(start, length), lexems) && (matchedToken == null || matchedToken.Priority < token.Priority))
-                        {
-                            matchedToken = token;
-                            matchedStart = start;
-                            matchedLength = length;
-                        }
-                    }
+                    var lexemeLength = recognizers[i].recognizer.GetLexemeLength(input, lexems);
+                    var recognezerBetterOnLength = lexemeLength > maxLexemeLength;
+                    var recognezerBetterOnPriority = lexemeLength > 0
+                        && lexemeLength == maxLexemeLength
+                        && (bestRecognizerIndex == -1 || recognizers[i].priority > recognizers[bestRecognizerIndex].priority);
 
-                    if (matchedToken != null)
+                    if (recognezerBetterOnLength || recognezerBetterOnPriority)
                     {
-                        var lexeme = new Lexeme(input.Substring(matchedStart, matchedLength), matchedToken, matchedStart);
-                        if (!insignificantTokenTypes.Contains(matchedToken.Type))
-                        {
-                            lexems.Add(lexeme);
-                            yield return lexeme;
-                        }
-                        start = matchedStart + matchedLength - 1;
-                        break;
-                    }
+                        maxLexemeLength = lexemeLength;
+                        bestRecognizerIndex = i;
+                    }                    
                 }
 
-                if (matchedToken == null)
-                    throw new ParseError(input.Substring(start));
+                if (maxLexemeLength > 0)
+                {
+                    if (!insignificantTokenTypes.Contains(recognizers[bestRecognizerIndex].tokenType))
+                    {
+                        var lexeme = new Lexeme(input.Substring(0, maxLexemeLength), recognizers[bestRecognizerIndex].tokenType);                        
+                        lexems.Add(lexeme);
+                        yield return lexeme;
+                    }
+                    input = input.Substring(maxLexemeLength);
+                }
+                else
+                    throw new ParseException(input);
             }
         }
     }

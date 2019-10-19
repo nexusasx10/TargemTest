@@ -2,16 +2,13 @@
 {
     public class Lexeme
     {
-        public int Position { get; }
         public string Text { get; }
-        public IToken Token { get; }
-        public int Length => Text.Length;
+        public TokenType TokenType { get; }
 
-        public Lexeme(string text, IToken token, int position)
+        public Lexeme(string text, TokenType tokenType)
         {
             Text = text;
-            Token = token;
-            Position = position;
+            TokenType = tokenType;
         }
     }
 }

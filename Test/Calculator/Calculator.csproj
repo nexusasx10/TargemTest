@@ -44,24 +44,21 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Calc.cs" />
-    <Compile Include="IToken.cs" />
+    <Compile Include="IRecognizer.cs" />
     <Compile Include="Lexeme.cs" />
-    <Compile Include="ParseError.cs" />
+    <Compile Include="ParseException.cs" />
     <Compile Include="Parser.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RegexToken.cs" />
-    <Compile Include="RPN.cs" />
-    <Compile Include="RPNError.cs" />
+    <Compile Include="RegexRecognizer.cs" />
+    <Compile Include="ReversePolishNotation.cs" />
+    <Compile Include="ReversePolishNotationException.cs" />
+    <Compile Include="TextRecognizer.cs" />
+    <Compile Include="TokenType.cs" />
     <Compile Include="UnaryOperatorToken.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\List\List.csproj">
-      <Project>{a68145c3-6285-463b-94aa-729ca9765a3b}</Project>
-      <Name>List</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

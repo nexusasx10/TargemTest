@@ -2,11 +2,11 @@
 
 namespace Calculator
 {
-    public class ParseError : Exception
+    public class ParseException : Exception
     {
         public string Symbol { get; }
 
-        public ParseError(string symbol)
+        public ParseException(string symbol)
         {
             Symbol = symbol;
         }
