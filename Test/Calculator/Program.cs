@@ -6,10 +6,16 @@ namespace Calculator
     {
         public static void Main(string[] args)
         {
-            var calculator = new Calc();
-            if (args.Length > 1)
+            if (args.Length > 0 && (args[0] == "--help" || args[0] == "-h"))
             {
-                calculator.Calculate(args[1]);
+                Console.WriteLine("Usage:\ncalculator EXPRESSION\ncalculator\n to run interactive mode.");
+                return;
+            }
+
+            var calculator = new Calc();
+            if (args.Length > 0)
+            {
+                calculator.Calculate(string.Concat(args));
             }
             else
             {
