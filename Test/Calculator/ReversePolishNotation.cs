@@ -73,8 +73,9 @@ namespace Calculator
 
             if (stack.Count == 0)
                 throw new ReversePolishNotationException("Missing operand");
-            if (stack.Count > 1)
+            else if (stack.Count > 1)
                 throw new ReversePolishNotationException("Missing operator");
+
             return stack.Pop();
         }
 
