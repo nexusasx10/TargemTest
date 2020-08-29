@@ -7,8 +7,10 @@
         PlusOperator,
         MinusOperator,
         UnaryMinusOperator,
+        UnaryPlusOperator,
         MultiplyOperator,
         DivideOperator,
+        PowerOperator,
         OpenBracket,
         CloseBracket
     }

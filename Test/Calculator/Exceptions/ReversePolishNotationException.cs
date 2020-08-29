@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Calculator
+namespace Calculator.Exceptions
 {
     public class ReversePolishNotationException : Exception
     {

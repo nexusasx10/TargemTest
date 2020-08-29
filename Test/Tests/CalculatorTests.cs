@@ -1,221 +1,143 @@
 ﻿using Calculator;
+using Calculator.Recognizers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace CalculatorTests
 {
     [TestClass]
     public class CalculatorTests
     {
+        private Parser _parser;
+
+        [TestInitialize]
+        public void TestInitialize()
+        {
+            _parser = ConfigureParser();
+        }
+
         public Parser ConfigureParser()
         {
-            var parser = new Parser(new List<TokenType> { TokenType.Space });
-            parser.RegisterRecognizer(new RegexRecognizer(@"\s+"), TokenType.Space, 0);
+            Parser parser = new Parser(new List<TokenType> { TokenType.Space });
+            parser.RegisterRecognizer(new WhitespaceRecognizer(), TokenType.Space, 0);
             parser.RegisterRecognizer(new TextRecognizer("+"), TokenType.PlusOperator, 0);
             parser.RegisterRecognizer(new TextRecognizer("-"), TokenType.MinusOperator, 0);
             parser.RegisterRecognizer(new TextRecognizer("*"), TokenType.MultiplyOperator, 0);
             parser.RegisterRecognizer(new TextRecognizer("/"), TokenType.DivideOperator, 0);
             parser.RegisterRecognizer(new TextRecognizer("("), TokenType.OpenBracket, 0);
             parser.RegisterRecognizer(new TextRecognizer(")"), TokenType.CloseBracket, 0);
-            parser.RegisterRecognizer(new UnaryOperatorRecognizer("-"), TokenType.UnaryMinusOperator, 1);
-            parser.RegisterRecognizer(new RegexRecognizer(@"\d*\.?\d+"), TokenType.Number, 0);
+            parser.RegisterRecognizer(new NumberRecognizer('.'), TokenType.Number, 0);
             return parser;
         }
 
-        [TestMethod]
-        public void TestSum()
+        public void CalcTest(string input, float expectedOutput)
         {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("3+4")).Text, "7");
+            Assert.AreEqual(expectedOutput, new ReversePolishNotation().Calculate(_parser.Parse(input), input, new NumberFormatInfo { NumberDecimalSeparator = "." }));
         }
 
         [TestMethod]
-        public void TestWhitespace()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("3 + 4")).Text, "7");
-        }
+        public void TestSum() =>
+            CalcTest("3+4", 7);
 
         [TestMethod]
-        public void TestDiff()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("12-4")).Text, "8");
-        }
+        public void TestWhitespace() =>
+            CalcTest("3 + 4", 7);
 
         [TestMethod]
-        public void TestNegDiff()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("4-12")).Text, "-8");
-        }
+        public void TestDiff() =>
+            CalcTest("12-4", 8);
 
         [TestMethod]
-        public void TestNeg()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("-23")).Text, "-23");
-        }
+        public void TestNegDiff() =>
+            CalcTest("4-12", -8);
 
         [TestMethod]
-        public void TestNegWhitespace()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("- 23")).Text, "-23");
-        }
+        public void TestNeg() =>
+            CalcTest("-23", -23);
 
         [TestMethod]
-        public void TestOperationOrder()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("2+2*2")).Text, "6");
-        }
+        public void TestNegWhitespace() =>
+            CalcTest("- 23", -23);
 
         [TestMethod]
-        public void TestOperationOrderSwitched()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("2*2+2")).Text, "6");
-        }
+        public void TestOperationOrder() =>
+            CalcTest("2+2*2", 6);
 
         [TestMethod]
-        public void TestBrackets()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("(2+2)*2")).Text, "8");
-        }
+        public void TestOperationOrderSwitched() =>
+            CalcTest("2*2+2", 6);
 
         [TestMethod]
-        public void TestBracketsSwitched()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("2*(2+2)")).Text, "8");
-        }
+        public void TestBrackets() =>
+            CalcTest("(2+2)*2", 8);
 
         [TestMethod]
-        public void TestNegBrackets()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("-(4-12)")).Text, "8");
-        }
+        public void TestBracketsSwitched() =>
+            CalcTest("2*(2+2)", 8);
 
         [TestMethod]
-        public void TestOperationOrderMultiple()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("(3 * 4) + (3 * 4) - (3 * 4)")).Text, "12");
-        }
+        public void TestNegBrackets() =>
+            CalcTest("-(4-12)", 8);
 
         [TestMethod]
-        public void TestOperationOrderMultipleSwitched()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("(3 * 4) - (3 * 4) + (3 * 4)")).Text, "12");
-        }
+        public void TestOperationOrderMultiple() =>
+            CalcTest("(3 * 4) + (3 * 4) - (3 * 4)", 12);
 
         [TestMethod]
-        public void TestDobleNeg()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("--3")).Text, "3");
-        }
+        public void TestOperationOrderMultipleSwitched() =>
+            CalcTest("(3 * 4) - (3 * 4) + (3 * 4)", 12);
 
         [TestMethod]
-        public void TestTripleNeg()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("---3")).Text, "-3");
-        }
+        public void TestNestedBrackets() =>
+            CalcTest("(2 + 1) * (2 * (3 - 5))", -12);
 
         [TestMethod]
-        public void TestNestedBrackets()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("(2 + 1) * (2 * (3 - 5))")).Text, "-12");
-        }
+        public void TestNestedBracketsMultiple() =>
+            CalcTest("((((((((2+3))))))))", 5);
 
         [TestMethod]
-        public void TestNestedBracketsMultiple()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("((((((((2+3))))))))")).Text, "5");
-        }
+        public void TestNestedBracketsMultiple2() =>
+            CalcTest("(2 + (2 + (2 + 2)))", 8);
 
         [TestMethod]
-        public void TestNestedBracketsMultiple2()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("(2 + (2 + (2 + 2)))")).Text, "8");
-        }
+        public void TestTestNestedBracketsMultipleNeg() =>
+            CalcTest("(-2 + (2 + (2 + 2)))", 4);
 
         [TestMethod]
-        public void TestTestNestedBracketsMultipleNeg()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("(-2 + (2 + (2 + 2)))")).Text, "4");
-        }
+        public void TestDivision() =>
+            CalcTest("3/4", 0.75f);
 
         [TestMethod]
-        public void TestDivision()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("3/4")).Text, "0.75");
-        }
+        public void TestMultiplyDivisionOrder() =>
+            CalcTest("4*3/2", 6);
 
         [TestMethod]
-        public void TestMultiplyDivisionOrder()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("4*3/2")).Text, "6");
-        }
+        public void TestDivisionOrder() =>
+            CalcTest("10/2/5", 1);
 
         [TestMethod]
-        public void TestDivisionOrder()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("10/2/5")).Text, "1");
-        }
+        public void TestFloatingPoint() =>
+            CalcTest("3.5", 3.5f);
 
         [TestMethod]
-        public void TestFloatingPoint()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("3.5")).Text, "3.5");
-        }
+        public void TestFloatingPointMultiply() =>
+            CalcTest("3.5*2", 7);
 
         [TestMethod]
-        public void TestFloatingPointMultiply()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("3.5*2")).Text, "7");
-        }
+        public void TestFloatingPointNeg() =>
+            CalcTest("-3.5", -3.5f);
 
         [TestMethod]
-        public void TestFloatingPointNeg()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("-3.5")).Text, "-3.5");
-        }
+        public void TestFloatingPointOperationOrder() =>
+            CalcTest("(2.5 + 1.5) * (2.5 * (3.5 - 5.5))", -20);
 
         [TestMethod]
-        public void TestFloatingPointOperationOrder()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("(2.5 + 1.5) * (2.5 * (3.5 - 5.5))")).Text, "-20");
-        }
+        public void TestMultiplyNeg() =>
+            CalcTest("3 * -1", -3);
 
         [TestMethod]
-        public void TestMultiplyNeg()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("3 * -1")).Text, "-3");
-        }
-
-        [TestMethod]
-        public void TestAllOperations()
-        {
-            var parser = ConfigureParser();
-            Assert.AreEqual(new ReversePolishNotation().Calculate(parser.Parse("((1.2 * -16 + 21) / 3.0 + 42 * (1 - 32.21)) + (12 / 3 / 4)")).Text, "-1309.22");
-        }
+        public void TestAllOperations() =>
+            CalcTest("((1.2 * -16 + 21) / 3.0 + 42 * (1 - 32.21)) + (12 / 3 / 4)", -1309.22f);
     }
 }

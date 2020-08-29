@@ -6,33 +6,30 @@ namespace List
 {
     public class MyList<T> : IList<T>
     {
-        private T[] items;
-        private readonly int capacity;
+        private const int _initialSize = 4;
 
-        public MyList()
+        private T[] _items;
+
+        public MyList() : this(0)
         {
-            items = new T[0];
         }
 
         public MyList(int capacity)
         {
-            items = new T[capacity];
-            this.capacity = capacity;
+            _items = new T[capacity];
         }
 
         public T this[int index]
         {
             get
             {
-                if (index >= 0 && index < Count)
-                    return items[index];
-                throw new IndexOutOfRangeException("Index must be between 0 and Count");
+                CheckIndex(index);
+                return _items[index];
             }
             set
             {
-                if (index >= 0 && index < Count)
-                    items[index] = value;
-                throw new IndexOutOfRangeException("Index must be between 0 and Count");
+                CheckIndex(index);
+                _items[index] = value;
             }
         }
 
@@ -42,27 +39,22 @@ namespace List
 
         public void Add(T item)
         {
-            if (Count + 1 > items.Length)
-            {
-                var newItems = new T[Count * 2 + 1];
-                Array.Copy(items, newItems, Count);
-                items = newItems;
-            }
-
-            items[Count] = item;
+            ExpandIfNeeded();
+            _items[Count] = item;
             Count++;
         }
 
         public void Clear()
         {
-            items = new T[capacity];
+            for (int i = 0; i < Count; i++)
+                _items[i] = default;
             Count = 0;
         }
 
         public bool Contains(T item)
         {
-            for (var i = 0; i < Count; i++)
-                if (items[i].Equals(item))
+            for (int i = 0; i < Count; i++)
+                if (_items[i].Equals(item))
                     return true;
             return false;
         }
@@ -77,57 +69,71 @@ namespace List
 
             if (Count > array.Length - arrayIndex)
                 throw new ArgumentException("Not enough space in array");
-            Array.Copy(items, 0, array, arrayIndex, Count);
+
+            Array.Copy(_items, 0, array, arrayIndex, Count);
         }
 
         public IEnumerator<T> GetEnumerator()
         {
-            for (var i = 0; i < Count; i++)
-                yield return items[i];
+            for (int i = 0; i < Count; i++)
+                yield return _items[i];
         }
+
+        IEnumerator IEnumerable.GetEnumerator() =>
+            GetEnumerator();
 
         public int IndexOf(T item)
         {
-            for (var i = 0; i < Count; i++)
-                if (items[i].Equals(item))
+            for (int i = 0; i < Count; i++)
+                if (_items[i].Equals(item))
                     return i;
             return -1;
         }
 
         public void Insert(int index, T item)
         {
-            var newItems = new T[Count + 1];
-            Array.Copy(items, newItems, index);
-            Array.Copy(items, index, newItems, index + 1, Count - index);
-            newItems[index] = item;
-            items = newItems;
+            CheckIndex(index);
+            ExpandIfNeeded();
+            Array.Copy(_items, index, _items, index + 1, Count - index);
+            _items[index] = item;
             Count++;
         }
 
         public bool Remove(T item)
         {
-            var index = IndexOf(item);
+            int index = IndexOf(item);
             if (index == -1)
                 return false;
+
             RemoveAt(index);
             return true;
         }
 
         public void RemoveAt(int index)
         {
-            if (index < 0 || index > Count - 1)
-                throw new IndexOutOfRangeException("Index must be between 0 and Count");
-
-            var newItems = new T[Count - 1];
-            Array.Copy(items, newItems, index);
-            Array.Copy(items, index + 1, newItems, index, Count - index - 1);
-            items = newItems;
+            CheckIndex(index);
+            Array.Copy(_items, index + 1, _items, index, Count - index - 1);
             Count--;
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
+        private void CheckIndex(int index, string errorMessage = "Index must be between 0 and Count")
         {
-            return GetEnumerator();
+            if (index < 0 || index >= Count)
+                throw new IndexOutOfRangeException(errorMessage);
+        }
+
+        private void ExpandIfNeeded()
+        {
+            if (Count + 1 <= _items.Length)
+                return;
+
+            int newCapacity = _items.Length == 0
+                ? _initialSize
+                : _items.Length * 2;
+
+            T[] newItems = new T[newCapacity];
+            Array.Copy(_items, newItems, Count);
+            _items = newItems;
         }
     }
 }

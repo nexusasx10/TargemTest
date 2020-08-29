@@ -1,38 +1,38 @@
-﻿using System.Collections.Generic;
+﻿using Calculator.Exceptions;
+using Calculator.Recognizers;
+using System.Collections.Generic;
 
 namespace Calculator
 {
     public class Parser
     {
-        private readonly List<(IRecognizer recognizer, TokenType tokenType, int priority)> recognizers;
-        private readonly List<TokenType> insignificantTokenTypes;
+        private readonly List<(IRecognizer recognizer, TokenType tokenType, int priority)> _recognizers;
+        private readonly List<TokenType> _insignificantTokenTypes;
 
         public Parser(List<TokenType> insignificantTokenTypes)
         {
-            this.insignificantTokenTypes = insignificantTokenTypes;
-            recognizers = new List<(IRecognizer recognizer, TokenType tokenType, int priority)>();
+            _insignificantTokenTypes = insignificantTokenTypes;
+            _recognizers = new List<(IRecognizer recognizer, TokenType tokenType, int priority)>();
         }
 
-        public void RegisterRecognizer(IRecognizer recognizer, TokenType tokenType, int priority)
-        {
-            recognizers.Add((recognizer, tokenType, priority));
-        }
+        public void RegisterRecognizer(IRecognizer recognizer, TokenType tokenType, int priority) =>
+            _recognizers.Add((recognizer, tokenType, priority));
 
         public IEnumerable<Lexeme> Parse(string input)
         {
-            var lexems = new List<Lexeme>();
+            int currentIndex = 0;
 
-            while (input.Length > 0)
+            while (currentIndex < input.Length)
             {
-                var maxLexemeLength = 0;
+                int maxLexemeLength = 0;
                 int bestRecognizerIndex = -1;
-                for (var i = 0; i < recognizers.Count; i++)
+                for (int i = 0; i < _recognizers.Count; i++)
                 {
-                    var lexemeLength = recognizers[i].recognizer.GetLexemeLength(input, lexems);
-                    var recognezerBetterOnLength = lexemeLength > maxLexemeLength;
-                    var recognezerBetterOnPriority = lexemeLength > 0
-                        && lexemeLength == maxLexemeLength
-                        && (bestRecognizerIndex == -1 || recognizers[i].priority > recognizers[bestRecognizerIndex].priority);
+                    int lexemeLength = _recognizers[i].recognizer.GetLexemeLength(input, currentIndex);
+                    bool recognezerBetterOnLength = lexemeLength > maxLexemeLength;
+                    bool recognezerBetterOnPriority = lexemeLength > 0 &&
+                        lexemeLength == maxLexemeLength &&
+                        (bestRecognizerIndex == -1 || _recognizers[i].priority > _recognizers[bestRecognizerIndex].priority);
 
                     if (recognezerBetterOnLength || recognezerBetterOnPriority)
                     {
@@ -43,16 +43,17 @@ namespace Calculator
 
                 if (maxLexemeLength > 0)
                 {
-                    if (!insignificantTokenTypes.Contains(recognizers[bestRecognizerIndex].tokenType))
+                    if (!_insignificantTokenTypes.Contains(_recognizers[bestRecognizerIndex].tokenType))
                     {
-                        var lexeme = new Lexeme(input.Substring(0, maxLexemeLength), recognizers[bestRecognizerIndex].tokenType);                        
-                        lexems.Add(lexeme);
+                        Lexeme lexeme = new Lexeme(currentIndex, maxLexemeLength, _recognizers[bestRecognizerIndex].tokenType);
                         yield return lexeme;
                     }
-                    input = input.Substring(maxLexemeLength);
+                    currentIndex += maxLexemeLength;
                 }
                 else
-                    throw new ParseException(input);
+                {
+                    throw new ParseException(currentIndex);
+                }
             }
         }
     }

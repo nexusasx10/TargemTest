@@ -1,13 +1,15 @@
 ﻿namespace Calculator
 {
-    public class Lexeme
+    public struct Lexeme
     {
-        public string Text { get; }
+        public int StartIndex { get; }
+        public int Length { get; }
         public TokenType TokenType { get; }
 
-        public Lexeme(string text, TokenType tokenType)
+        public Lexeme(int startIndex, int length, TokenType tokenType)
         {
-            Text = text;
+            StartIndex = startIndex;
+            Length = length;
             TokenType = tokenType;
         }
     }
