@@ -13,9 +13,9 @@ namespace Calculator
             { TokenType.MinusOperator, 1 },
             { TokenType.MultiplyOperator, 2 },
             { TokenType.DivideOperator, 2 },
-            { TokenType.PowerOperator, 3 },
-            { TokenType.UnaryMinusOperator, 4 },
-            { TokenType.UnaryPlusOperator, 4 }
+            { TokenType.UnaryMinusOperator, 3 },
+            { TokenType.UnaryPlusOperator, 3 },
+            { TokenType.PowerOperator, 4 }
         };
 
         private readonly Dictionary<TokenType, TokenType> _unaryOperatorAliases = new Dictionary<TokenType, TokenType>
